@@ -116,6 +116,7 @@ const environments = {
   dev: "https://geoguessr.local",
 };
 
+// Parse environment argument
 const envArg = process.argv.find((arg) => arg.includes("--env="));
 if (envArg) {
   const env = envArg.split("=")[1];
@@ -129,6 +130,7 @@ if (envArg) {
   log.info("No environment specified, defaulting to production.");
 }
 
+// Set the base URL based on environment
 const baseUrl = environments[environment];
 
 const createWindow = async () => {
@@ -148,7 +150,8 @@ const createWindow = async () => {
   }
 
   const isProd = environment === "prod";
-
+  
+  // Safely get display metrics
   let targetDisplay;
   try {
     const isWayland = process.env.XDG_SESSION_TYPE === "wayland" || process.env.WAYLAND_DISPLAY;
@@ -189,8 +192,10 @@ const createWindow = async () => {
     x: startX,
     y: startY,
     width: startWidth,
-    backgroundColor: "#1a1a2e",
     height: startHeight,
+    minWidth: 10,
+    minHeight: 10,
+    backgroundColor: "#1a1a2e",
     fullscreen: startFullscreen,
     autoHideMenuBar: true,
     webPreferences: {
