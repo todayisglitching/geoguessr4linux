@@ -1,81 +1,75 @@
 # GeoGuessr Duels Linux Patch (Safe Patch Repo)
 
-Minimal, safe patch set for running the Steam version on Linux.  
-This repo contains **only patch files and instructions**. It does **not** include any Steam game files, binaries, SDK files, or built AppImage artifacts.
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/github/license/wexelsdev/geoguessr4linux?style=for-the-badge&label=License&logo=github&color=yellow" alt="License">
+  </a>
+  <a href="#">
+    <img src="https://img.shields.io/badge/Platform-Linux-blue?style=for-the-badge&logo=linux&color=0078d7" alt="Platform">
+  </a>
+</p>
 
-## What’s Included
 
-- `files/main.js`
-- `files/steam-ipc.js`
-- `files/preload.js`
-- `files/package.json`
+A minimal, safe, and legal patch set to run the **Steam version of GeoGuessr** natively on Linux. This repository provides the necessary Electron logic to bridge the game with the Steamworks SDK on Linux systems.
 
-These are drop‑in replacements for the unpacked `app.asar` source code.
+## 🛠 Features
 
-## What’s NOT Included
+- **Native Steam Integration**: Supports Steam authentication, friend list, and game invites.
+- **Linux Optimizations**: Includes pre-configured flags for X11, Wayland compatibility, and GPU performance.
+- **Safe Patch Model**: No game assets or Steam binaries are included. You must provide them from your own installation.
+- **Multi-Build Support**: Export as an AppImage or a portable directory (binary).
 
-- No game content
-- No Steamworks SDK
-- No Steam binaries
-- No compiled artifacts (`dist/`, `AppImage`, `.node`, `.so`)
-- No `node_modules`
+## 📦 What’s Included
 
-## Quick Start (Local Only)
+This repository contains only the source files needed to patch the game:
+- `files/main.js` (Core application logic)
+- `files/steam-ipc.js` (Steamworks bridge)
+- `files/preload.js` (Secure renderer API)
+- `files/package.json` (Build configuration and dependencies)
 
-1) Copy the patched files into your extracted source folder:
 
+## 🚀 Quick Start
+
+### 1. Extract the Original Game
+You must extract the original `app.asar` from your GeoGuessr installation (typically found in the game's `resources` folder).
+```bash
+npx asar extract app.asar app-unpacked/
+```
+
+### 2. Apply the Patch
+Copy the files from this repo into your extracted source:
 ```bash
 cp -v files/* /path/to/app-unpacked/
 ```
 
-2) Install deps and build:
+### 3. Setup Steamworks SDK (Required)
+The patch requires the `redistributable_bin` from the Steamworks SDK.
+1. Download the SDK from the [Steamworks Partner site](https://partner.steamgames.com/).
+2. Copy the `redistributable_bin` folder into your `app-unpacked/steamworks_sdk/` directory.
 
+### 4. Build the Application
 ```bash
 cd /path/to/app-unpacked
 npm install
-npm run build:linux-appimage
-```
 
-## Steamworks SDK Setup (Required)
+# Option A: Build as AppImage (Self-contained)
+npm run build:linux-img
 
-This patch uses `steamworks-ffi-node`, which **requires Steamworks SDK redistributables** at runtime.
+# Option B: Build as a Portable Binary Folder (Fastest start)
+npm run build:linux-bin
 
-You must download the SDK from Steamworks Partner:
-
-1) Go to the Steamworks Partner site and **log in / register**.  
-2) Open the SDK download page and download the SDK zip.  
-   (You’ll need to be authenticated; direct links require an active session.)
-3) Extract the SDK and copy **only** the `redistributable_bin` folder into your patched source:
-
-```
-app-unpacked/
-└── steamworks_sdk/
-    └── redistributable_bin/
-        ├── linux64/libsteam_api.so
-        ├── win64/steam_api64.dll
-        └── ... (other platforms optional)
-```
-
-You do **not** need the full SDK source in this repo. Just `redistributable_bin`.
-
-## Build Targets
-
-```bash
-npm run build:linux-appimage
+# Option C: Build as a Compressed Tarball
 npm run build:linux-tar
-npm run build:linux-dir
 ```
 
-`build:linux-dir` produces a folder with the app binary (no AppImage).
+## 📚 Detailed Documentation
 
-## Notes
+Comprehensive documentation can be found in the [docs/](docs/README.md) folder:
+- [Architecture](docs/architecture.md)
+- [Installation Guide](docs/installation.md)
+- [Development & Debugging](docs/development.md)
+- [Steam Integration Details](docs/steam-integration.md)
 
-- On Linux, run under X11 for stability. Example:
+## ⚖️ Legal
 
-```bash
-XDG_SESSION_TYPE=x11 GDK_BACKEND=x11 QT_QPA_PLATFORM=xcb GEOGUESSR_IN_PROCESS_GPU=1 GEOGUESSR_NO_FULLSCREEN=1 ./GeoGuessr\ Duels-1.0.0.AppImage
-```
-
-## Legal / Safety
-
-This repo does **not** redistribute any Steam or game assets. You must own the game and apply the patch locally.
+This project is a patch set and does not redistribute any copyrighted material from GeoGuessr or Valve Corporation. Users are responsible for complying with the Terms of Service of both platforms.
