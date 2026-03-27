@@ -1,5 +1,6 @@
 # GeoGuessr Duels Linux Patch (Safe Patch Repo)
 
+Minimal, safe patch set for running the Steam version on Linux.  
 This repo contains **only patch files and instructions**. It does **not** include any Steam game files, binaries, SDK files, or built AppImage artifacts.
 
 ## What’s Included
@@ -19,37 +20,56 @@ These are drop‑in replacements for the unpacked `app.asar` source code.
 - No compiled artifacts (`dist/`, `AppImage`, `.node`, `.so`)
 - No `node_modules`
 
-## How To Apply (Local Only)
+## Quick Start (Local Only)
 
-1) Extract `app.asar` from the installed game into a folder, e.g.:
-
-```bash
-npx asar extract "/path/to/GeoGuessr Duels/resources/app.asar" /path/to/app-unpacked
-```
-
-2) Copy the patched files over the extracted source:
+1) Copy the patched files into your extracted source folder:
 
 ```bash
-cp -v files/main.js files/steam-ipc.js files/preload.js files/package.json /path/to/app-unpacked/
+cp -v files/* /path/to/app-unpacked/
 ```
 
-3) Repack:
-
-```bash
-npx asar pack /path/to/app-unpacked "/path/to/GeoGuessr Duels/resources/app.asar"
-```
-
-4) Build Linux AppImage (optional):
+2) Install deps and build:
 
 ```bash
 cd /path/to/app-unpacked
 npm install
-npm run build:linux
+npm run build:linux-appimage
 ```
+
+## Steamworks SDK Setup (Required)
+
+This patch uses `steamworks-ffi-node`, which **requires Steamworks SDK redistributables** at runtime.
+
+You must download the SDK from Steamworks Partner:
+
+1) Go to the Steamworks Partner site and **log in / register**.  
+2) Open the SDK download page and download the SDK zip.  
+   (You’ll need to be authenticated; direct links require an active session.)
+3) Extract the SDK and copy **only** the `redistributable_bin` folder into your patched source:
+
+```
+app-unpacked/
+└── steamworks_sdk/
+    └── redistributable_bin/
+        ├── linux64/libsteam_api.so
+        ├── win64/steam_api64.dll
+        └── ... (other platforms optional)
+```
+
+You do **not** need the full SDK source in this repo. Just `redistributable_bin`.
+
+## Build Targets
+
+```bash
+npm run build:linux-appimage
+npm run build:linux-tar
+npm run build:linux-dir
+```
+
+`build:linux-dir` produces a folder with the app binary (no AppImage).
 
 ## Notes
 
-- Steamworks SDK files are required at runtime when using `steamworks-ffi-node`.
 - On Linux, run under X11 for stability. Example:
 
 ```bash
