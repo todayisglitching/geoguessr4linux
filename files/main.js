@@ -116,7 +116,6 @@ const environments = {
   dev: "https://geoguessr.local",
 };
 
-// Parse environment argument
 const envArg = process.argv.find((arg) => arg.includes("--env="));
 if (envArg) {
   const env = envArg.split("=")[1];
@@ -130,7 +129,6 @@ if (envArg) {
   log.info("No environment specified, defaulting to production.");
 }
 
-// Set the base URL based on environment
 const baseUrl = environments[environment];
 
 const createWindow = async () => {
@@ -150,12 +148,38 @@ const createWindow = async () => {
   }
 
   const isProd = environment === "prod";
-  const cursorPoint = screen.getCursorScreenPoint();
-  const targetDisplay = screen.getDisplayNearestPoint(cursorPoint);
+
+  let targetDisplay;
+  try {
+    const isWayland = process.env.XDG_SESSION_TYPE === "wayland" || process.env.WAYLAND_DISPLAY;
+    if (isWayland) {
+       log.info("Wayland detected, using primary display for initialization to avoid potential crashes");
+       targetDisplay = screen.getPrimaryDisplay();
+    } else {
+       const cursorPoint = screen.getCursorScreenPoint();
+       targetDisplay = screen.getDisplayNearestPoint(cursorPoint);
+    }
+  } catch (err) {
+    log.warn("Failed to get display metrics, falling back to primary display", err);
+    try {
+      targetDisplay = screen.getPrimaryDisplay();
+    } catch (e) {
+      log.error("Failed to get primary display", e);
+    }
+  }
+
+  if (!targetDisplay) {
+    log.error("No display found, using defaults");
+    targetDisplay = {
+      bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+      workArea: { x: 0, y: 0, width: 1920, height: 1080 }
+    };
+  }
+
   const { x, y, width, height } = targetDisplay.bounds;
 
   const startFullscreen = process.env.GEOGUESSR_NO_FULLSCREEN !== "1";
-  const workArea = targetDisplay.workArea;
+  const workArea = targetDisplay.workArea || targetDisplay.bounds;
   const startWidth = startFullscreen ? width : workArea.width;
   const startHeight = startFullscreen ? height : workArea.height;
   const startX = startFullscreen ? x : workArea.x;
