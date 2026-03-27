@@ -1,0 +1,16 @@
+# Never include game/steam artifacts
+app.asar
+app.asar.unpacked/
+resources/
+steamworks_sdk/
+node_modules/
+dist/
+*.AppImage
+*.node
+*.so
+*.dll
+*.dylib
+
+# OS junk
+.DS_Store
+Thumbs.db
