@@ -8,7 +8,10 @@
     "start:dev": "electron . --env=dev",
     "start:linux-x11": "GEOGUESSR_PERF=1 GEOGUESSR_IN_PROCESS_GPU=1 GEOGUESSR_NO_FULLSCREEN=1 XDG_SESSION_TYPE=x11 GDK_BACKEND=x11 QT_QPA_PLATFORM=xcb electron . --env=prod",
     "start:linux-safe": "GEOGUESSR_PERF=1 GEOGUESSR_DISABLE_HW_ACCEL=1 GEOGUESSR_NO_FULLSCREEN=1 electron . --env=prod",
-    "build:linux": "electron-builder --linux AppImage"
+    "build": "electron-builder",
+    "build:linux-bin": "electron-builder --linux dir",
+    "build:linux-tar": "electron-builder --linux tar.gz",
+    "build:linux-img": "electron-builder --linux AppImage"
   },
   "dependencies": {
     "electron-log": "^5.2.0",
@@ -37,7 +40,9 @@
     "asar": true,
     "linux": {
       "target": [
-        "AppImage"
+        "AppImage",
+        "pacman",
+        "tar.gz"
       ],
       "category": "Game"
     }
