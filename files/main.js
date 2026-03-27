@@ -91,7 +91,7 @@ if (process.env.STEAM_DISABLE !== "1") {
         callbackInterval = setInterval(() => {
           try {
             steamworks.runCallbacks();
-          } catch (_) {}
+          } catch (_) { }
         }, 1000 / 30);
       }
     }
@@ -150,17 +150,17 @@ const createWindow = async () => {
   }
 
   const isProd = environment === "prod";
-  
+
   // Safely get display metrics
   let targetDisplay;
   try {
     const isWayland = process.env.XDG_SESSION_TYPE === "wayland" || process.env.WAYLAND_DISPLAY;
     if (isWayland) {
-       log.info("Wayland detected, using primary display for initialization to avoid potential crashes");
-       targetDisplay = screen.getPrimaryDisplay();
+      log.info("Wayland detected, using primary display for initialization to avoid potential crashes");
+      targetDisplay = screen.getPrimaryDisplay();
     } else {
-       const cursorPoint = screen.getCursorScreenPoint();
-       targetDisplay = screen.getDisplayNearestPoint(cursorPoint);
+      const cursorPoint = screen.getCursorScreenPoint();
+      targetDisplay = screen.getDisplayNearestPoint(cursorPoint);
     }
   } catch (err) {
     log.warn("Failed to get display metrics, falling back to primary display", err);
@@ -225,17 +225,55 @@ const createWindow = async () => {
     log.error("webContents: crashed");
   });
 
-  const allowOverlay =
-    process.env.STEAM_NO_OVERLAY !== "1" &&
-    !(process.platform === "linux" && process.env.STEAM_FORCE_OVERLAY !== "1");
+  const allowOverlay = process.env.STEAM_NO_OVERLAY !== "1";
   if (allowOverlay) {
-    try {
-      if (typeof steamworks.addElectronSteamOverlay === "function") {
-        steamworks.addElectronSteamOverlay(mainWindow);
+    let overlayAttempted = false;
+    const tryInitOverlay = () => {
+      if (overlayAttempted || mainWindow.isDestroyed()) return;
+      overlayAttempted = true;
+
+      log.info("[overlay] SteamAppId:", process.env.SteamAppId);
+      log.info("[overlay] LD_PRELOAD:", process.env.LD_PRELOAD);
+
+      const isWayland = !!(process.env.WAYLAND_DISPLAY || process.env.XDG_SESSION_TYPE === "wayland");
+      if (isWayland) {
+        log.warn("[overlay] Wayland detected — Steam overlay via GLX/X11 not supported, skipping");
+        return;
       }
-    } catch (err) {
-      log.warn("Steam overlay init failed:", err);
-    }
+
+      let hookActive = false;
+      try {
+        const maps = require("fs").readFileSync("/proc/self/maps", "utf8");
+        hookActive = maps.includes("gameoverlayrenderer");
+        log.info("[overlay] gameoverlayrenderer in /proc/self/maps:", hookActive);
+      } catch (_) { }
+
+      if (!hookActive) {
+        log.warn("[overlay] gameoverlayrenderer64.so not loaded — overlay hook inactive, skipping native init to avoid crash");
+        return;
+      }
+
+      try {
+        if (typeof steamworks.addElectronSteamOverlay === "function") {
+          const ok = steamworks.addElectronSteamOverlay(mainWindow);
+          if (ok === false) {
+            log.warn("[overlay] addElectronSteamOverlay returned false");
+          } else {
+            log.info("[overlay] Steam overlay initialized successfully");
+          }
+        } else {
+          log.warn("[overlay] addElectronSteamOverlay not available on steamworks object");
+        }
+      } catch (err) {
+        log.warn("[overlay] init failed (non-fatal):", err);
+      }
+    };
+    mainWindow.webContents.once("did-finish-load", () => {
+      setTimeout(tryInitOverlay, 500);
+    });
+    mainWindow.once("show", () => {
+      setTimeout(tryInitOverlay, 600);
+    });
   }
 
   const showDelay = process.env.GEOGUESSR_SHOW_DELAY_MS

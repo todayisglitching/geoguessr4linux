@@ -138,10 +138,30 @@ function registerSteamIpc(ipcMain, steamworks, state, getWc) {
     return (friends ?? []).map((friend) => friendToPayload(steamworks, friend));
   });
 
-  handle("steam:friends:getFriendRichPresence", () => null);
+  handle("steam:friends:getFriendRichPresence", (steamId, key) => {
+    if (!steamworks?.richPresence?.getFriendRichPresence) {
+      return null;
+    }
+    return steamworks.richPresence.getFriendRichPresence(String(steamId), key) || null;
+  });
 
-  handle("steam:friends:inviteToGame", () => {
-    return { error: "inviteToGame not available" };
+  handle("steam:friends:inviteToGame", (steamId, connectString) => {
+    try {
+      if (!steamworks?.apiCore?.libraryLoader) return { error: "Steam library not loaded" };
+      const steamLib = steamworks.apiCore.libraryLoader.getLibrary();
+      if (!steamLib) return { error: "No Koffi library instance" };
+
+      const friendsInterface = steamworks.apiCore.getFriendsInterface();
+      if (!friendsInterface) return { error: "No SteamFriends interface" };
+
+      // Define the FFI function using koffi
+      const inviteFn = steamLib.func('SteamAPI_ISteamFriends_InviteUserToGame', 'bool', ['void*', 'uint64', 'str']);
+      const success = inviteFn(friendsInterface, BigInt(steamId), connectString);
+
+      return { success };
+    } catch (err) {
+      return { error: err.message };
+    }
   });
 
   handle("steam:overlay:activateDialogToUser", (dialog, steamId64) => {
